@@ -91,6 +91,8 @@ def align_depth_to_color(mode = "read", clipping_dist = 1, file_name = None):
             bg_removed = np.where((depth_image_3d > clipping_distance) | (depth_image_3d <= 0), grey_color, color_image)
             bg_removed = cv2.cvtColor(bg_removed, cv2.COLOR_BGR2HSV)
             bg_removed = cv2.inRange(bg_removed, (126,76,47), (152, 223, 255))
+            # dilation_size = 7
+            bg_removed = dilatation(bg_removed)
 
             # Render images:
             #   depth align to color on left
@@ -100,9 +102,17 @@ def align_depth_to_color(mode = "read", clipping_dist = 1, file_name = None):
 
             # images = np.hstack((bg_removed, depth_colormap))
             images = bg_removed
+            # _,_,images = cv2.split(images)
+            images = cv2.Canny(images, 80, 255)
+            contours, hierarchy = cv2.findContours(images, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            # cv2.imshow('BG Removed', images)
+            # cv2.namedWindow('align', cv2.WINDOW_NORMAL)
+            
+            # 
 
-            cv2.namedWindow('Align Example', cv2.WINDOW_NORMAL)
-            cv2.imshow('Align Example', images)
+            cv2.drawContours(images, contours, -1, (0,255,0), 3)
+            cv2.imshow('Contours', images)
+
             key = cv2.waitKey(1)
             # Press esc or 'q' to close the image window
             if key & 0xFF == ord('q') or key == 27:
@@ -110,3 +120,12 @@ def align_depth_to_color(mode = "read", clipping_dist = 1, file_name = None):
                 break
     finally:
         pipeline.stop()
+
+def dilatation(images):
+    dilatation_size = 7
+    dilation_shape = cv2.MORPH_ELLIPSE
+    element = cv2.getStructuringElement(dilation_shape, (2 * dilatation_size + 1, 2 * dilatation_size + 1),
+                                       (dilatation_size, dilatation_size))
+    dilatation_dst = cv2.dilate(images, element)
+    return dilatation_dst
+    # cv.imshow(title_dilation_window, dilatation_dst)
