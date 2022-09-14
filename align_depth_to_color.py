@@ -121,8 +121,13 @@ def align_depth_to_color(mode = "read", clipping_dist = 1, file_name = None):
 
             # calculate centroid here
             if contours:
-                first_contour = contours[0]
-                M = cv2.moments(first_contour)
+                max_area = float("-inf")
+                main_body = contours[0]
+                for cnt in contours:
+                    if cv2.contourArea(cnt) > max_area:
+                        max_area = cv2.contourArea(cnt)
+                        main_body = cnt
+                M = cv2.moments(main_body)
                 cx = int(M['m10']/M['m00'])
                 cy = int(M['m01']/M['m00'])
                 cv2.circle(color_image, (cx, cy), radius = 5, color = (0,0,255), thickness = -1)
