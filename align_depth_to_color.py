@@ -47,6 +47,8 @@ def align_depth_to_color(mode = "read", clipping_dist = 1, file_name = None):
 
     # Start streaming
     profile = pipeline.start(config)
+    profile1 = profile.get_stream(rs.stream.color)
+    intr = profile1.as_video_stream_profile().get_intrinsics()
 
     # Getting the depth sensor's depth scale (see rs-align example for explanation)
     depth_sensor = profile.get_device().first_depth_sensor()
@@ -83,7 +85,9 @@ def align_depth_to_color(mode = "read", clipping_dist = 1, file_name = None):
                 continue
 
             depth_image = np.asanyarray(aligned_depth_frame.get_data())
+            # print(depth_image.shape)
             color_image = np.asanyarray(color_frame.get_data())
+            # print(depth_image.shape)
 
             # Remove background - Set pixels further than clipping_distance to grey
             grey_color = 153
@@ -131,7 +135,8 @@ def align_depth_to_color(mode = "read", clipping_dist = 1, file_name = None):
                 cx = int(M['m10']/M['m00'])
                 cy = int(M['m01']/M['m00'])
                 cv2.circle(color_image, (cx, cy), radius = 5, color = (0,0,255), thickness = -1)
-            
+                coordinates = rs.rs2_deproject_pixel_to_point(intr, [cx,cy], depth_image[cy][cx] * depth_scale)
+                print(coordinates)
 
             cv2.imshow('Contours', color_image)
 
