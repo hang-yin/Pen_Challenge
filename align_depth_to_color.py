@@ -89,10 +89,17 @@ def align_depth_to_color(mode = "read", clipping_dist = 1, file_name = None):
             grey_color = 153
             depth_image_3d = np.dstack((depth_image,depth_image,depth_image)) #depth image is 1 channel, color is 3 channels
             bg_removed = np.where((depth_image_3d > clipping_distance) | (depth_image_3d <= 0), grey_color, color_image)
+            # Convert to HSV
             bg_removed = cv2.cvtColor(bg_removed, cv2.COLOR_BGR2HSV)
+            # Only keep purple color
             bg_removed = cv2.inRange(bg_removed, (126,76,47), (152, 223, 255))
+            
+            # BGR_images = cv2.cvtColor(bg_removed, cv2.COLOR_HSV2BGR)
             # dilation_size = 7
+            
+            # Filter image using dilatation
             bg_removed = dilatation(bg_removed)
+            bg_removed = erosion(bg_removed)
 
             # Render images:
             #   depth align to color on left
@@ -103,15 +110,25 @@ def align_depth_to_color(mode = "read", clipping_dist = 1, file_name = None):
             # images = np.hstack((bg_removed, depth_colormap))
             images = bg_removed
             # _,_,images = cv2.split(images)
-            images = cv2.Canny(images, 80, 255)
-            contours, hierarchy = cv2.findContours(images, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            
+            # images = cv2.Canny(images, 80, 255)
+            # imgray = cv2.cvtColor(BGR_images, cv2.COLOR_BGR2GRAY)
+            
+            contours, hierarchy = cv2.findContours(images, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             # cv2.imshow('BG Removed', images)
             # cv2.namedWindow('align', cv2.WINDOW_NORMAL)
-            
-            # 
+            cv2.drawContours(color_image, contours, -1, (0,255,0), 3)
 
-            cv2.drawContours(images, contours, -1, (0,255,0), 3)
-            cv2.imshow('Contours', images)
+            # calculate centroid here
+            if contours:
+                first_contour = contours[0]
+                M = cv2.moments(first_contour)
+                cx = int(M['m10']/M['m00'])
+                cy = int(M['m01']/M['m00'])
+                cv2.circle(color_image, (cx, cy), radius = 5, color = (0,0,255), thickness = -1)
+            
+
+            cv2.imshow('Contours', color_image)
 
             key = cv2.waitKey(1)
             # Press esc or 'q' to close the image window
@@ -122,10 +139,18 @@ def align_depth_to_color(mode = "read", clipping_dist = 1, file_name = None):
         pipeline.stop()
 
 def dilatation(images):
-    dilatation_size = 7
+    dilatation_size = 12
     dilation_shape = cv2.MORPH_ELLIPSE
     element = cv2.getStructuringElement(dilation_shape, (2 * dilatation_size + 1, 2 * dilatation_size + 1),
                                        (dilatation_size, dilatation_size))
     dilatation_dst = cv2.dilate(images, element)
     return dilatation_dst
     # cv.imshow(title_dilation_window, dilatation_dst)
+
+def erosion(images):
+    erosion_size = 1
+    erosion_shape = cv2.MORPH_ELLIPSE
+    element = cv2.getStructuringElement(erosion_shape, (2 * erosion_size + 1, 2 * erosion_size + 1),
+                                       (erosion_size, erosion_size))
+    erosion_dst = cv2.erode(images, element)
+    return erosion_dst
