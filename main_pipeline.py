@@ -102,8 +102,8 @@ def main(mode = "live", clipping_dist = 1, file_name = "sample_video.bag"):
             only_purple = cv2.inRange(image_hsv, (126,76,47), (152, 223, 255))
             
             # Filter image using dilatation
-            with_dilatation = dilatation(only_purple)
-            with_erosion = erosion(with_dilatation)
+            with_dilation = dilation(only_purple)
+            with_erosion = erosion(with_dilation)
             images = with_erosion
 
             contours, _ = cv2.findContours(images, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)

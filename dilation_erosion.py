@@ -4,7 +4,7 @@ import numpy as np
 # Import OpenCV for easy image rendering
 import cv2
 
-def dilatation(images):
+def dilation(images):
     dilatation_size = 12
     dilation_shape = cv2.MORPH_ELLIPSE
     element = cv2.getStructuringElement(dilation_shape, (2 * dilatation_size + 1, 2 * dilatation_size + 1),
