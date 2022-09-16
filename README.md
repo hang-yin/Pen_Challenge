@@ -1,6 +1,8 @@
 # Pen Challenge
 This project aims at enabling the PincherX 100 Robot Arm to grab a pen that is held in front of it. 
 
+https://user-images.githubusercontent.com/60046203/190689558-efa1b89a-823f-4b22-bbe7-d447c134210e.mov
+
 ## Robot specs
 |PincherX-100||
 |----|----|
