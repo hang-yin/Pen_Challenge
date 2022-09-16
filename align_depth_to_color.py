@@ -1,7 +1,3 @@
-#####################################################
-##              Align Depth to Color               ##
-#####################################################
-
 # First import the library
 import pyrealsense2 as rs
 # Import Numpy for easy array manipulation
