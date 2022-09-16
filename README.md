@@ -30,5 +30,5 @@ we use open loop control to move the gripper towards the pen and grab it.
 
 ## Run the code
 1. Clone this repository
-2. Run 'python3 main_pipeline.py'
+2. Run `python3 main_pipeline.py`
 3. Tune parameters as needed
