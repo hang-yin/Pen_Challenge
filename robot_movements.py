@@ -7,7 +7,8 @@ import time
 
 robot = InterbotixManipulatorXS("px100", "arm", "gripper")
 
-def waist_motion(radian):
+def waist_motion(x_coord, depth):
+    radian = np.arctan2((depth - 0.17), (x_coord + 0.3))
     robot.arm.set_single_joint_position("waist", radian)
     return
 
