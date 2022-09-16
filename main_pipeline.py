@@ -7,7 +7,7 @@ import cv2
 from robot_movements import *
 from dilation_erosion import *
 
-def main_pipeline(mode = "read", clipping_dist = 1, file_name = None):
+def main(mode = "live", clipping_dist = 1, file_name = "sample_video.bag"):
     # Create a pipeline
     pipeline = rs.pipeline()
 
@@ -34,7 +34,6 @@ def main_pipeline(mode = "read", clipping_dist = 1, file_name = None):
         config.enable_record_to_file(file_name)
     elif mode == "read":
         config.enable_device_from_file(file_name)
-
 
     config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 
@@ -89,45 +88,28 @@ def main_pipeline(mode = "read", clipping_dist = 1, file_name = None):
                 continue
 
             depth_image = np.asanyarray(aligned_depth_frame.get_data())
-            # print(depth_image.shape)
             color_image = np.asanyarray(color_frame.get_data())
-            # print(depth_image.shape)
 
             # Remove background - Set pixels further than clipping_distance to grey
             grey_color = 153
             depth_image_3d = np.dstack((depth_image,depth_image,depth_image)) #depth image is 1 channel, color is 3 channels
             bg_removed = np.where((depth_image_3d > clipping_distance) | (depth_image_3d <= 0), grey_color, color_image)
+
             # Convert to HSV
-            bg_removed = cv2.cvtColor(bg_removed, cv2.COLOR_BGR2HSV)
+            image_hsv = cv2.cvtColor(bg_removed, cv2.COLOR_BGR2HSV)
+
             # Only keep purple color
-            bg_removed = cv2.inRange(bg_removed, (126,76,47), (152, 223, 255))
-            
-            # BGR_images = cv2.cvtColor(bg_removed, cv2.COLOR_HSV2BGR)
-            # dilation_size = 7
+            only_purple = cv2.inRange(image_hsv, (126,76,47), (152, 223, 255))
             
             # Filter image using dilatation
-            bg_removed = dilatation(bg_removed)
-            bg_removed = erosion(bg_removed)
+            with_dilatation = dilatation(only_purple)
+            with_erosion = erosion(with_dilatation)
+            images = with_erosion
 
-            # Render images:
-            #   depth align to color on left
-            #   depth on right
-            depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
-
-
-            # images = np.hstack((bg_removed, depth_colormap))
-            images = bg_removed
-            # _,_,images = cv2.split(images)
-            
-            # images = cv2.Canny(images, 80, 255)
-            # imgray = cv2.cvtColor(BGR_images, cv2.COLOR_BGR2GRAY)
-            
-            contours, hierarchy = cv2.findContours(images, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-            # cv2.imshow('BG Removed', images)
-            # cv2.namedWindow('align', cv2.WINDOW_NORMAL)
+            contours, _ = cv2.findContours(images, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             cv2.drawContours(color_image, contours, -1, (0,255,0), 3)
 
-            # calculate centroid here
+            # calculate centroid
             if contours:
                 max_area = float("-inf")
                 main_body = contours[0]
@@ -139,16 +121,14 @@ def main_pipeline(mode = "read", clipping_dist = 1, file_name = None):
                 cx = int(M['m10']/M['m00'])
                 cy = int(M['m01']/M['m00'])
                 cv2.circle(color_image, (cx, cy), radius = 5, color = (0,0,255), thickness = -1)
-                x_coord, y_coord, depth = rs.rs2_deproject_pixel_to_point(intr, [cx,cy], depth_image[cy][cx] * depth_scale)
+                x_coord, _, depth = rs.rs2_deproject_pixel_to_point(intr, [cx,cy], depth_image[cy][cx] * depth_scale)
                 # print(str(x_coord) + " " + str(y_coord) + " " + str(depth))
             
                 waist_motion(x_coord, depth)
-                state = move_towards_pen(x_coord, y_coord, depth)
+                state = move_towards_pen(x_coord, depth)
                 if state:
                     grab_pen()
                     break
-                
-
             cv2.imshow('Contours', color_image)
 
             key = cv2.waitKey(1)
@@ -158,3 +138,6 @@ def main_pipeline(mode = "read", clipping_dist = 1, file_name = None):
                 break
     finally:
         pipeline.stop()
+
+if __name__ == "__main__":
+    main()

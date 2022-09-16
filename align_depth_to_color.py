@@ -5,7 +5,7 @@ import numpy as np
 # Import OpenCV for easy image rendering
 import cv2
 
-def align_depth_to_color(mode = "read", clipping_dist = 1, file_name = None):
+def main_pipeline(mode = "read", clipping_dist = 1, file_name = None):
     # Create a pipeline
     pipeline = rs.pipeline()
 
@@ -131,8 +131,8 @@ def align_depth_to_color(mode = "read", clipping_dist = 1, file_name = None):
                 cx = int(M['m10']/M['m00'])
                 cy = int(M['m01']/M['m00'])
                 cv2.circle(color_image, (cx, cy), radius = 5, color = (0,0,255), thickness = -1)
-                coordinates = rs.rs2_deproject_pixel_to_point(intr, [cx,cy], depth_image[cy][cx] * depth_scale)
-                print(coordinates)
+                x_coord, y_coord, depth = rs.rs2_deproject_pixel_to_point(intr, [cx,cy], depth_image[cy][cx] * depth_scale)
+                print(str(x_coord) + " " + str(y_coord) + " " + str(depth))
 
             cv2.imshow('Contours', color_image)
 

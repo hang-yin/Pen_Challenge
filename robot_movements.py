@@ -21,7 +21,7 @@ def waist_motion(x_coord, depth):
     robot.arm.set_single_joint_position("waist", radian)
     return
 
-def move_towards_pen(x_coord, y_coord, depth):
+def move_towards_pen(x_coord, depth):
     dist = calculate_distance(x_coord + 0.2, depth - 0.17)
     state = robot.arm.set_ee_cartesian_trajectory(x=dist - 0.1, z = -0.02)
     return state
