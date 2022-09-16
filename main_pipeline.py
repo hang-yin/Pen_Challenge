@@ -5,6 +5,7 @@ import numpy as np
 # Import OpenCV for easy image rendering
 import cv2
 from robot_movements import *
+from dilation_erosion import *
 
 def main_pipeline(mode = "read", clipping_dist = 1, file_name = None):
     # Create a pipeline
@@ -62,6 +63,12 @@ def main_pipeline(mode = "read", clipping_dist = 1, file_name = None):
     # The "align_to" is the stream type to which we plan to align depth frames.
     align_to = rs.stream.color
     align = rs.align(align_to)
+
+    # before loop begins
+    # we need to set the initial position of the robot to home position
+    go_to_home_pos()
+    shoulder_motion(-0.7)
+    elbow_motion(0.6)
 
     # Streaming loop
     try:
@@ -136,6 +143,11 @@ def main_pipeline(mode = "read", clipping_dist = 1, file_name = None):
                 # print(str(x_coord) + " " + str(y_coord) + " " + str(depth))
             
                 waist_motion(x_coord, depth)
+                state = move_towards_pen(x_coord, y_coord, depth)
+                if state:
+                    grab_pen()
+                    break
+                
 
             cv2.imshow('Contours', color_image)
 
@@ -146,20 +158,3 @@ def main_pipeline(mode = "read", clipping_dist = 1, file_name = None):
                 break
     finally:
         pipeline.stop()
-
-def dilatation(images):
-    dilatation_size = 12
-    dilation_shape = cv2.MORPH_ELLIPSE
-    element = cv2.getStructuringElement(dilation_shape, (2 * dilatation_size + 1, 2 * dilatation_size + 1),
-                                       (dilatation_size, dilatation_size))
-    dilatation_dst = cv2.dilate(images, element)
-    return dilatation_dst
-    # cv.imshow(title_dilation_window, dilatation_dst)
-
-def erosion(images):
-    erosion_size = 1
-    erosion_shape = cv2.MORPH_ELLIPSE
-    element = cv2.getStructuringElement(erosion_shape, (2 * erosion_size + 1, 2 * erosion_size + 1),
-                                       (erosion_size, erosion_size))
-    erosion_dst = cv2.erode(images, element)
-    return erosion_dst
