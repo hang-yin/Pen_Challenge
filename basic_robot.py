@@ -17,10 +17,11 @@ while mode != 'q':
     elif mode == "r":
         robot.gripper.release()
     elif mode == "f":
-        # robot.arm.set_ee_cartesian_trajectory(x = )
-        # print(robot.arm.get_ee_pose())
+        # state = robot.arm.set_ee_cartesian_trajectory(x = )
+        # print(state)
         pass
     elif mode == "t":
         robot.arm.go_to_home_pose()
         # turn turret
-        robot.arm.set_single_joint_position("waist", 100, moving_time=5)
+        state = robot.arm.set_single_joint_position("waist", 0.0)
+        print(state)
